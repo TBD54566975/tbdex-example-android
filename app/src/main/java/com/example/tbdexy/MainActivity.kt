@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.TextView
 import web5.sdk.credentials.VerifiableCredential
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.dht.DidDht
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,5 +18,9 @@ class MainActivity : AppCompatActivity() {
 
         val vcTextView: TextView = findViewById(R.id.vcTextView)
         vcTextView.text = vc.toString()
+
+        val keyManager = InMemoryKeyManager()
+        val did = DidDht.create(keyManager)
+        vcTextView.text = did.toString()
     }
 }
