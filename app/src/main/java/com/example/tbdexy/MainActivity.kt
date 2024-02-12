@@ -2,10 +2,17 @@ package com.example.tbdexy
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.security.keystore.KeyProtection
 import android.widget.TextView
 import web5.sdk.credentials.VerifiableCredential
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.dht.DidDht
+import java.security.KeyStore
+import java.security.KeyStore.Entry
+import java.security.KeyStore.PasswordProtection
+import java.security.KeyStore.SecretKeyEntry
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,8 +26,13 @@ class MainActivity : AppCompatActivity() {
         val vcTextView: TextView = findViewById(R.id.vcTextView)
         vcTextView.text = vc.toString()
 
-        val keyManager = InMemoryKeyManager()
+        super.getApplicationContext()
+        val keyManager = AndroidKeyManager(applicationContext)
         val did = DidDht.create(keyManager)
-        vcTextView.text = did.toString()
+        vcTextView.text = did.toString() + did.didDocument?.id
+
+
+
     }
 }
+
