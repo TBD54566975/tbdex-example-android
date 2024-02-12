@@ -96,7 +96,6 @@ class AndroidKeyManager : KeyManager {
      * @throws Exception if a key with the provided alias is not found in the keyStore.
      */
     override fun getPublicKey(keyAlias: String): JWK {
-        // TODO: decide whether to return null or throw an exception
         val privateKey = getPrivateKey(keyAlias)
         return Crypto.computePublicKey(privateKey)
     }
