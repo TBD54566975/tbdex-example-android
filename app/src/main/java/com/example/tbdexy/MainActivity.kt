@@ -3,7 +3,17 @@ package com.example.tbdexy
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.security.keystore.KeyProtection
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import tbdex.sdk.httpclient.TbdexHttpClient
+import tbdex.sdk.protocol.models.Offering
 import web5.sdk.credentials.VerifiableCredential
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.dht.DidDht
@@ -24,15 +34,66 @@ class MainActivity : AppCompatActivity() {
         print(vc)
 
         val vcTextView: TextView = findViewById(R.id.vcTextView)
-        vcTextView.text = vc.toString()
 
-        super.getApplicationContext()
         val keyManager = AndroidKeyManager(applicationContext)
         val did = DidDht.create(keyManager)
-        vcTextView.text = did.toString() + did.didDocument?.id
+        vcTextView.text = "this is my did: " + did.didDocument?.id
 
 
 
+        // Use Coroutine to perform network operation in the background
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val off = TbdexHttpClient.getOfferings("did:ion:EiBUs74t-Ka2sMVUMRpcPNlXB_-EApSS79YrLsLXVVKxpQ:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJkd24tc2lnIiwicHVibGljS2V5SndrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiVTR5S3hIMDB1UXFqOEhrZUFRYlJmOVdNVlpkZ1piaWt2ZWliN19mUUNORSJ9LCJwdXJwb3NlcyI6WyJhdXRoZW50aWNhdGlvbiIsImFzc2VydGlvbk1ldGhvZCJdLCJ0eXBlIjoiSnNvbldlYktleTIwMjAifV0sInNlcnZpY2VzIjpbeyJpZCI6InBmaSIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHBzOi8vY2VsbHMtdGVycm9yLWxlby1wb3VsdHJ5LnRyeWNsb3VkZmxhcmUuY29tIiwidHlwZSI6IlBGSSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpQ3N1WHFKT2RtOUF6VW9kRXpJTF90SDBJQ216bHZiUmFCeHFRQWV1VTdYb2cifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNhY2paMW5SZUlRTnp4NDkwMURBVVhkcEVpSERvZ0RwUUpMZ0JfMER2c01BIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlDMVIteXFmWWNvb2xTYWRMcGxjanFVMGg5S3paRzRWbjFJdFV5MTJ6M1FBUSJ9fQ")
+                print(off)
+
+                // Update UI on the main thread
+                withContext(Dispatchers.Main) {
+                    val offersRecyclerView: RecyclerView = findViewById(R.id.offersRecyclerView)
+                    val offersAdapter = OffersAdapter(off)
+                    offersRecyclerView.adapter = offersAdapter
+                }
+
+            } catch (e: Exception) {
+
+                withContext(Dispatchers.Main) {
+                    vcTextView.text = vcTextView.text.toString() + "\nUnable to load the offers, check logcat"
+                }
+
+            }
+        }
+
+
+
+
+
+    }
+}
+
+class OffersAdapter(private val offers: List<Offering>) : RecyclerView.Adapter<OffersAdapter.OfferViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OfferViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_offer, parent, false)
+        return OfferViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: OfferViewHolder, position: Int) {
+        val offer = offers[position]
+        holder.bind(offer)
+    }
+
+    override fun getItemCount(): Int = offers.size
+
+    class OfferViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val descriptionTextView: TextView = itemView.findViewById(R.id.descriptionTextView)
+        private val exchangeRateTextView: TextView = itemView.findViewById(R.id.exchangeRateTextView)
+        private val currenciesTextView: TextView = itemView.findViewById(R.id.currenciesTextView)
+
+        fun bind(offer: Offering) {
+            descriptionTextView.text = offer.data.description
+            exchangeRateTextView.text = "Exchange Rate: ${offer.data.payoutUnitsPerPayinUnit}"
+            currenciesTextView.text = "Payout: ${offer.data.payoutCurrency.currencyCode}, Payin: ${offer.data.payinCurrency.currencyCode}"
+        }
     }
 }
 
