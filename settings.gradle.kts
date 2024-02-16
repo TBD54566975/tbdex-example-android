@@ -10,9 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://jitpack.io")
-        maven("https://repo.danubetech.com/repository/maven-public/")
-
+        // Thirdparty dependencies of TBD projects not in Maven Central
+        maven("https://blockxyz.jfrog.io/artifactory/tbd-oss-thirdparty-maven2/")
     }
 }
 
