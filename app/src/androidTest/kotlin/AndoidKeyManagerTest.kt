@@ -9,6 +9,7 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import web5.sdk.crypto.AlgorithmId
 
 @RunWith(AndroidJUnit4::class)
 class AndroidKeyManagerInstrumentedTest {
@@ -25,7 +26,7 @@ class AndroidKeyManagerInstrumentedTest {
     @Test
     fun testKeyGenerationSigningAndPublicKeyRetrieval() {
         // Step 1: Generate a private key with specific algorithm and curve
-        val keyAlias = keyManager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+        val keyAlias = keyManager.generatePrivateKey(AlgorithmId.Ed25519)
         assertNotNull("Key alias should not be null", keyAlias)
 
         // Step 2: Sign some data with the generated key
