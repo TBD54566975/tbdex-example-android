@@ -13,6 +13,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import web5.sdk.crypto.AlgorithmId
 
 
 /**
@@ -82,8 +83,8 @@ class AndroidKeyManager : KeyManager {
      * @param options Options for key generation, may include specific parameters relevant to the algorithm.
      * @return The key ID of the generated private key.
      */
-    override fun generatePrivateKey(algorithm: Algorithm, curve: Curve?, options: KeyGenOptions?): String {
-        val jwk = Crypto.generatePrivateKey(algorithm, curve, options)
+    override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
+        val jwk = Crypto.generatePrivateKey(algorithmId, options)
         saveSecret(context, jwk.keyID, jwk.toJSONString())
         return jwk.keyID
     }

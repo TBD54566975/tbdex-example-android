@@ -14,8 +14,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import tbdex.sdk.httpclient.TbdexHttpClient
 import tbdex.sdk.protocol.models.Offering
+import tbdex.sdk.protocol.models.Rfq
+import tbdex.sdk.protocol.models.RfqData
 import web5.sdk.credentials.VerifiableCredential
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.Did
 import web5.sdk.dids.methods.dht.DidDht
 import java.security.KeyStore
 import java.security.KeyStore.Entry
@@ -28,6 +31,32 @@ import javax.crypto.spec.SecretKeySpec
  * Shows the basics of interacting with the the tbdex SDK in an android app.
  */
 class MainActivity : AppCompatActivity() {
+
+    private val pfiServer = "https://earl-researchers-quotations-ebook.trycloudflare.com"
+
+    suspend fun fetchPfiDid(): String {
+        return withContext(Dispatchers.IO) {
+            val client = okhttp3.OkHttpClient()
+            val request = okhttp3.Request.Builder()
+                .url("$pfiServer/did")
+                .build()
+            val response = client.newCall(request).execute()
+            response.body?.string() ?: ""
+        }
+    }
+
+    suspend fun getVerifiableCredential(did: Did): String {
+        return withContext(Dispatchers.IO) {
+            val url = "$pfiServer/vc?name=Mic&country=Australia&did=${did.uri}"
+            val client = okhttp3.OkHttpClient()
+            val request = okhttp3.Request.Builder()
+                .url(url)
+                .build()
+            val response = client.newCall(request).execute()
+            response.body?.string() ?: ""
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -48,6 +77,7 @@ class MainActivity : AppCompatActivity() {
          */
         val keyManager = AndroidKeyManager(applicationContext)
         val did = DidDht.create(keyManager)
+
         vcTextView.text = "this is my did: " + did.didDocument?.id
 
 
@@ -55,12 +85,20 @@ class MainActivity : AppCompatActivity() {
         // Use Coroutine to perform network operation in the background as required by android
         CoroutineScope(Dispatchers.IO).launch {
             try {
+
+                val pfiDid = fetchPfiDid()
+                print(pfiDid)
+
+
+
+                val signedVC = getVerifiableCredential(did)
+                print(signedVC)
+
                 /*
                  * This will talk to a PFI (liquidity node) and get the offerings available. The DID that is provided is from the PFI server.
                  * This is a list of offerings which we can render later on. See the OffersAdapter class for how it shows some of the offering fields.
                  */
-                val off = TbdexHttpClient.getOfferings("did:ion:EiCVF_RwIWYYitxCFakM12UJQZROBRqS1EG98E-1GxYtcA:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJkd24tc2lnIiwicHVibGljS2V5SndrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiNUZSd1ZnWjZXczUzZXFIUWNKeHgtUjRYVzFPa1lha2lMb0pHTE1nTnVfOCJ9LCJwdXJwb3NlcyI6WyJhdXRoZW50aWNhdGlvbiIsImFzc2VydGlvbk1ldGhvZCJdLCJ0eXBlIjoiSnNvbldlYktleTIwMjAifV0sInNlcnZpY2VzIjpbeyJpZCI6InBmaSIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHBzOi8vZGVzaWducy1hZHZlcnRpc2VyLWFyY2hpdmUtbGFuZ3VhZ2UudHJ5Y2xvdWRmbGFyZS5jb20iLCJ0eXBlIjoiUEZJIn1dfX1dLCJ1cGRhdGVDb21taXRtZW50IjoiRWlBWW42NkFSbGJfd05ORzRLcDZJYXZJQzRIOUh6a2tBVFdOcGZiVnZPSVl5dyJ9LCJzdWZmaXhEYXRhIjp7ImRlbHRhSGFzaCI6IkVpQjJ3N0w1SmMzQmVGTktqOTI2ZEI2ajZMM0xmSjNOSk9pZ3FBck1Tek9tbHciLCJyZWNvdmVyeUNvbW1pdG1lbnQiOiJFaUJNLWFYNWFDQlhaNFZpQ0VhMHBUU1gwZVIzWkVyaVZxbmI5c1lJeDRyUXB3In19")
-
+                val off = TbdexHttpClient.getOfferings(pfiDid)
 
                 // Update UI on the main thread
                 withContext(Dispatchers.Main) {
@@ -69,10 +107,12 @@ class MainActivity : AppCompatActivity() {
                     offersRecyclerView.adapter = offersAdapter
                 }
 
+
             } catch (e: Exception) {
+                e.printStackTrace()
 
                 withContext(Dispatchers.Main) {
-                    vcTextView.text = vcTextView.text.toString() + "\nUnable to load the offers, check logcat"
+                    vcTextView.text = vcTextView.text.toString() + "\nUnable to load the offers, check logcat " + e.toString()
                 }
 
             }
