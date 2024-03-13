@@ -16,6 +16,7 @@ import tbdex.sdk.httpclient.TbdexHttpClient
 import tbdex.sdk.protocol.models.Offering
 import tbdex.sdk.protocol.models.Rfq
 import tbdex.sdk.protocol.models.RfqData
+import tbdex.sdk.protocol.models.SelectedPaymentMethod
 import web5.sdk.credentials.VerifiableCredential
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.Did
@@ -45,9 +46,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    suspend fun getVerifiableCredential(did: Did): String {
+    suspend fun getVerifiableCredential(did: String?): String {
         return withContext(Dispatchers.IO) {
-            val url = "$pfiServer/vc?name=Mic&country=Australia&did=${did.uri}"
+            val url = "$pfiServer/vc?name=Mic&country=Australia&did=${did}"
             val client = okhttp3.OkHttpClient()
             val request = okhttp3.Request.Builder()
                 .url(url)
@@ -91,7 +92,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-                val signedVC = getVerifiableCredential(did)
+                val signedVC = getVerifiableCredential(did.didDocument?.id)
                 print(signedVC)
 
                 /*
@@ -108,11 +109,61 @@ class MainActivity : AppCompatActivity() {
                 }
 
 
+
+
+                val cardNumber = "5520000000000000"
+                val expiryMonth = "05"
+                val expiryYear = "2024"
+                val cvc = "123"
+                val nameOnCard = "Roland Robot"
+                val accountNumber = "987654321"
+                val bsbNumber = "123456"
+                val accountName = "Mr Roland Robot"
+                val transferAmount = "42.42"
+
+
+                val payinPaymentDetails = mapOf(
+                    "cc_number" to cardNumber,
+                    "expiry_month" to expiryMonth,
+                    "expiry_year" to expiryYear,
+                    "cvc" to cvc,
+                    "name" to nameOnCard
+                )
+
+                val payoutPaymentDetails = mapOf(
+                    "accountNumber" to accountNumber,
+                    "bsbNumber" to bsbNumber,
+                    "accountName" to accountName
+                )
+
+                print("offering:" +  off)
+                val rfqData = RfqData(
+                    offeringId = off.first().metadata.id,
+                    payinAmount = transferAmount,
+                    payinMethod = SelectedPaymentMethod("CREDIT_CARD", payinPaymentDetails),
+                    payoutMethod = SelectedPaymentMethod("AUSTRALIAN_BANK_ACCOUNT", payoutPaymentDetails),
+                    claims = listOf(signedVC)
+                )
+
+
+                val rfq = Rfq.create(
+                    to = pfiDid,
+                    from = did.uri,
+                    rfqData = rfqData
+                )
+
+                rfq.sign(did)
+                TbdexHttpClient.createExchange(rfq, did.uri)
+                println("Sent RFQ: ${rfq}")
+
+
+
+
             } catch (e: Exception) {
                 e.printStackTrace()
 
                 withContext(Dispatchers.Main) {
-                    vcTextView.text = vcTextView.text.toString() + "\nUnable to load the offers, check logcat " + e.toString()
+                    vcTextView.text = vcTextView.text.toString() + "\n" + e.toString()
                 }
 
             }
