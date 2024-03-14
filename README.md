@@ -1,10 +1,10 @@
 # Android and tbdex
 
 This shows the tbdex SDK working in Android in a simple mobile app with Kotlin.
-See `MainActivity.kt` for the main code showing tbdex in android.
+See `MainActivity.kt` for the main code showing tbdex APIs.
 Also includes an `AndroidKeyManager` implementation that uses the Android Keystore to store that tbdex uses for DIDs and VCs.
 
-This can serve as a starter app for tbdex on android.
+This can serve as a starter app for tbdex on android. I think I have said android enough times now.
 
 ## Running 
 
