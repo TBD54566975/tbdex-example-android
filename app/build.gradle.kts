@@ -47,20 +47,25 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    /** required to make tbdex and key management work */
+    implementation("androidx.security:security-crypto:1.0.0")
     implementation("xyz.block:tbdex-httpclient:0.11.0-beta") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
         exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
         exclude(group = "com.github.stephenc.jcip", module = "jcip-annotations")
         exclude(group = "com.google.crypto.tink", module="tink")
     }
+
     implementation("xyz.block:tbdex-protocol:0.11.0-beta") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
         exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
         exclude(group = "com.github.stephenc.jcip", module = "jcip-annotations")
         exclude(group = "com.google.crypto.tink", module="tink")
-
     }
-    implementation("androidx.security:security-crypto:1.0.0")
+
+
+
 
 
     testImplementation("junit:junit:4.13.2")
