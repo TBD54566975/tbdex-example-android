@@ -1,6 +1,9 @@
 package com.example.tbdexy
 
 import androidx.appcompat.app.AppCompatActivity
+import android.content.DialogInterface
+import androidx.appcompat.app.AlertDialog
+
 import android.os.Bundle
 import android.security.keystore.KeyProtection
 import android.view.LayoutInflater
@@ -13,7 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import tbdex.sdk.httpclient.TbdexHttpClient
+import tbdex.sdk.httpclient.models.Exchange
 import tbdex.sdk.protocol.models.Offering
+import tbdex.sdk.protocol.models.Order
 import tbdex.sdk.protocol.models.Rfq
 import tbdex.sdk.protocol.models.RfqData
 import tbdex.sdk.protocol.models.SelectedPaymentMethod
@@ -33,6 +38,9 @@ import javax.crypto.spec.SecretKeySpec
  */
 class MainActivity : AppCompatActivity() {
 
+    // when you start a pfi, put it's URL here.
+    // Android needs it to be https
+    //  so cloudflared tunnel --url http://localhost:9000 can be used to give you a http URL
     private val pfiServer = "https://vision-offer-repository-friends.trycloudflare.com"
 
     suspend fun fetchPfiDid(): String {
@@ -81,16 +89,12 @@ class MainActivity : AppCompatActivity() {
 
         vcTextView.text = "this is my did: " + did.didDocument?.id
 
-
-
         // Use Coroutine to perform network operation in the background as required by android
         CoroutineScope(Dispatchers.IO).launch {
             try {
 
                 val pfiDid = fetchPfiDid()
                 print(pfiDid)
-
-
 
                 val signedVC = getVerifiableCredential(did.didDocument?.id)
                 print(signedVC)
@@ -109,7 +113,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
 
-
+                /*
+                 * Now lets do a exchange, in this case USD for AUD
+                 */
 
                 val cardNumber = "5520000000000000"
                 val expiryMonth = "05"
@@ -157,6 +163,38 @@ class MainActivity : AppCompatActivity() {
                 println("Sent RFQ: ${rfq}")
 
 
+                val exchanges = TbdexHttpClient.getExchanges(pfiDid, did)
+                println("Exchanges: ${exchanges}")
+
+                // fetch exchange by exchangeId
+                val currentExchange = exchanges.find { it.first().metadata.exchangeId == rfq.metadata.exchangeId }
+                println("Target Exchange: ${currentExchange}")
+
+                // show the messages
+                currentExchange?.forEach { println(it) }
+
+
+
+                // find the message which has metadata.kind of "quote"
+                val quote = currentExchange?.find { it.metadata.kind.name == "quote" }
+                println("Quote: ${quote}")
+
+                // now lets place an order for this quote:
+                val order = Order.create(to=pfiDid, exchangeId = rfq.metadata.exchangeId, from=did.uri)
+                order.sign(did)
+                TbdexHttpClient.submitOrder(order)
+
+                // ask user to continue somehow in android, wait for their input
+                showAlertForUserInput("Soon the order should be put though, look at logcat to see results and should see Order and Order status and close.")
+
+
+                // now reload exchanges, and see the order and result, if waited long enough
+                // for the payment to be processed..
+                val currentExchange2 = TbdexHttpClient.getExchanges(pfiDid, did).find { it.first().metadata.exchangeId == rfq.metadata.exchangeId }
+                currentExchange2?.forEach { println(it) }
+
+
+
 
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -173,6 +211,26 @@ class MainActivity : AppCompatActivity() {
 
 
     }
+
+    fun showAlertForUserInput(msg: String) {
+        // Use the main thread for UI operations
+        runOnUiThread {
+            AlertDialog.Builder(this).apply {
+                setTitle("Confirmation")
+                setMessage(msg)
+                setPositiveButton("Yes") { dialog, which ->
+                    // User clicked Yes, continue with your operation
+                    // You might want to call a function here to continue your process
+                }
+                setNegativeButton("No") { dialog, which ->
+                    // User clicked No, handle accordingly
+                }
+                setCancelable(false)  // This prevents the dialog from being dismissed by tapping outside.
+                show()
+            }
+        }
+    }
+
 }
 
 class OffersAdapter(private val offers: List<Offering>) : RecyclerView.Adapter<OffersAdapter.OfferViewHolder>() {
