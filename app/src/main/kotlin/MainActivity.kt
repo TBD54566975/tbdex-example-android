@@ -33,7 +33,7 @@ import javax.crypto.spec.SecretKeySpec
  */
 class MainActivity : AppCompatActivity() {
 
-    private val pfiServer = "https://earl-researchers-quotations-ebook.trycloudflare.com"
+    private val pfiServer = "https://vision-offer-repository-friends.trycloudflare.com"
 
     suspend fun fetchPfiDid(): String {
         return withContext(Dispatchers.IO) {
@@ -155,7 +155,6 @@ class MainActivity : AppCompatActivity() {
                 rfq.sign(did)
                 TbdexHttpClient.createExchange(rfq, did.uri)
                 println("Sent RFQ: ${rfq}")
-
 
 
 
