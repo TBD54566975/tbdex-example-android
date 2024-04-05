@@ -39,8 +39,6 @@ android {
     }
 }
 
-
-
 dependencies {
 
     implementation("androidx.core:core-ktx:1.10.1")
@@ -57,7 +55,7 @@ dependencies {
         exclude(group = "com.google.crypto.tink", module="tink")
     }
 
-    implementation("xyz.block:tbdex-protocol:0.11.0-beta") {
+    implementation("xyz.block:tbdex-protocol:1.0.0-maven-rc-2") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
         exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
         exclude(group = "com.github.stephenc.jcip", module = "jcip-annotations")
