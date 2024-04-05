@@ -5,8 +5,6 @@ import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
 import android.content.Context
@@ -135,13 +133,10 @@ class AndroidKeyManager : KeyManager {
         return kid
     }
 
-    private fun getPrivateKey(keyAlias: String) {
-
-        getSecret(context, keyAlias)
-        Jwk.Builder()
-
-        JWK.parse(getSecret(context, keyAlias))
-
+    private fun getPrivateKey(keyAlias: String): Jwk {
+        val maybeJwkString = getSecret(context, keyAlias)
+        val jwk = Json.jsonMapper.readValue(maybeJwkString, Jwk::class.java)
+        return jwk
     }
 
 
