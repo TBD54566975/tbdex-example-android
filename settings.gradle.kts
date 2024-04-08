@@ -10,8 +10,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // TBD Releases
-        maven("https://blockxyz.jfrog.io/artifactory/tbd-oss-releases-maven2/")
         // Thirdparty dependencies of TBD projects not in Maven Central
         maven("https://blockxyz.jfrog.io/artifactory/tbd-oss-thirdparty-maven2/")
     }
