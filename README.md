@@ -19,11 +19,47 @@ To run with a PFI to test it end to end:
 * Run the app and you will see an offer loaded from the PFI, and then it will place an order. 
 * Check the logcat logs to see the result of the tbdex workflow including order status and completion.
 
-## Android specific build tips  
+## Android specific tips  
 
 * exclude META-INF/DEPENDENCIES
 * exclude other things like protobuf, bouncy castle etc so that it uses android shipped versions.
 * Check out the `build.gradle.kts` file for more info.
+* Allow plaintext for json-schema.org (see below) in your Android config
+
+### Plaintext for json-schema.org
+
+If you get the error: `com.networknt.schema.JsonSchemaException: java.io.IOException: Cleartext HTTP traffic to json-schema.org not permitted`
+Then to the following:
+
+Create file `res/xml/network_security_config.xml`
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">api.example.com(to be adjusted)</domain>
+    </domain-config>
+</network-security-config>
+```
+
+And add to `AndroidManifest.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest ...>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application
+        ...
+        android:networkSecurityConfig="@xml/network_security_config"
+        ...>
+        ...
+    </application>
+</manifest>
+```
+
+(thanks to https://stackoverflow.com/questions/45940861/android-8-cleartext-http-traffic-not-permitted)
+
+
 
 TODO: 
 

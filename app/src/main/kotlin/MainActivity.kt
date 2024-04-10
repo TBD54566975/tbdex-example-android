@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     // when you start a pfi, put its URL here.
     // Android needs it to be https
     //  so cloudflared tunnel --url http://localhost:9000 can be used to give you a http URL
-    private val pfiServer = "https://vision-offer-repository-friends.trycloudflare.com"
+    private val pfiServer = "https://atlantic-outline-liverpool-collectible.trycloudflare.com"
 
     suspend fun fetchPfiDid(): String {
         return withContext(Dispatchers.IO) {
