@@ -6,9 +6,10 @@ plugins {
 android {
     namespace = "com.example.tbdexy"
     compileSdk = 34
-
     packagingOptions {
-        exclude("META-INF/DEPENDENCIES")
+        resources {
+            excludes += setOf("META-INF/DEPENDENCIES")
+        }
     }
 
     defaultConfig {
