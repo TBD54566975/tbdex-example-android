@@ -39,8 +39,6 @@ android {
     }
 }
 
-
-
 dependencies {
 
     implementation("androidx.core:core-ktx:1.10.1")
@@ -50,14 +48,14 @@ dependencies {
 
     /** required to make tbdex and key management work */
     implementation("androidx.security:security-crypto:1.0.0")
-    implementation("xyz.block:tbdex-httpclient:0.11.0-beta") {
+    implementation("xyz.block:tbdex-httpclient:1.0.0") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
         exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
         exclude(group = "com.github.stephenc.jcip", module = "jcip-annotations")
         exclude(group = "com.google.crypto.tink", module="tink")
     }
 
-    implementation("xyz.block:tbdex-protocol:0.11.0-beta") {
+    implementation("xyz.block:tbdex-protocol:1.0.0") {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
         exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
         exclude(group = "com.github.stephenc.jcip", module = "jcip-annotations")

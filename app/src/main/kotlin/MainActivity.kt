@@ -1,11 +1,10 @@
 package com.example.tbdexy
 
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
-import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
 
 import android.os.Bundle
-import android.security.keystore.KeyProtection
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,32 +15,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import tbdex.sdk.httpclient.TbdexHttpClient
-import tbdex.sdk.httpclient.models.Exchange
-import tbdex.sdk.protocol.models.Offering
-import tbdex.sdk.protocol.models.Order
-import tbdex.sdk.protocol.models.Rfq
-import tbdex.sdk.protocol.models.RfqData
-import tbdex.sdk.protocol.models.SelectedPaymentMethod
+import tbdex.sdk.protocol.models.*
 import web5.sdk.credentials.VerifiableCredential
-import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.Did
 import web5.sdk.dids.methods.dht.DidDht
-import java.security.KeyStore
-import java.security.KeyStore.Entry
-import java.security.KeyStore.PasswordProtection
-import java.security.KeyStore.SecretKeyEntry
-import javax.crypto.SecretKey
-import javax.crypto.spec.SecretKeySpec
 
 /**
- * Shows the basics of interacting with the the tbdex SDK in an android app.
+ * Shows the basics of interacting with the tbdex SDK in an android app.
  */
 class MainActivity : AppCompatActivity() {
 
-    // when you start a pfi, put it's URL here.
+    // when you start a pfi, put its URL here.
     // Android needs it to be https
     //  so cloudflared tunnel --url http://localhost:9000 can be used to give you a http URL
-    private val pfiServer = "https://vision-offer-repository-friends.trycloudflare.com"
+    private val pfiServer = "https://atlantic-outline-liverpool-collectible.trycloudflare.com"
 
     suspend fun fetchPfiDid(): String {
         return withContext(Dispatchers.IO) {
@@ -66,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -87,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         val keyManager = AndroidKeyManager(applicationContext)
         val did = DidDht.create(keyManager)
 
-        vcTextView.text = "this is my did: " + did.didDocument?.id
+        vcTextView.text = "this is my did: ${did.uri}"
 
         // Use Coroutine to perform network operation in the background as required by android
         CoroutineScope(Dispatchers.IO).launch {
@@ -96,19 +83,19 @@ class MainActivity : AppCompatActivity() {
                 val pfiDid = fetchPfiDid()
                 print(pfiDid)
 
-                val signedVC = getVerifiableCredential(did.didDocument?.id)
+                val signedVC = getVerifiableCredential(did.uri)
                 print(signedVC)
 
                 /*
                  * This will talk to a PFI (liquidity node) and get the offerings available. The DID that is provided is from the PFI server.
                  * This is a list of offerings which we can render later on. See the OffersAdapter class for how it shows some of the offering fields.
                  */
-                val off = TbdexHttpClient.getOfferings(pfiDid)
+                val offering = TbdexHttpClient.getOfferings(pfiDid)
 
                 // Update UI on the main thread
                 withContext(Dispatchers.Main) {
                     val offersRecyclerView: RecyclerView = findViewById(R.id.offersRecyclerView)
-                    val offersAdapter = OffersAdapter(off)
+                    val offersAdapter = OffersAdapter(offering)
                     offersRecyclerView.adapter = offersAdapter
                 }
 
@@ -142,12 +129,11 @@ class MainActivity : AppCompatActivity() {
                     "accountName" to accountName
                 )
 
-                print("offering:" +  off)
-                val rfqData = RfqData(
-                    offeringId = off.first().metadata.id,
-                    payinAmount = transferAmount,
-                    payinMethod = SelectedPaymentMethod("CREDIT_CARD", payinPaymentDetails),
-                    payoutMethod = SelectedPaymentMethod("AUSTRALIAN_BANK_ACCOUNT", payoutPaymentDetails),
+                print("offering:$offering")
+                val rfqData = CreateRfqData(
+                    offeringId = offering.first().metadata.id,
+                    payin = CreateSelectedPayinMethod(kind = "CREDIT_CARD", amount = transferAmount, paymentDetails = payinPaymentDetails),
+                    payout = CreateSelectedPayoutMethod(kind = "AUSTRALIAN_BANK_ACCOUNT", paymentDetails = payoutPaymentDetails),
                     claims = listOf(signedVC)
                 )
 
@@ -252,10 +238,11 @@ class OffersAdapter(private val offers: List<Offering>) : RecyclerView.Adapter<O
         private val exchangeRateTextView: TextView = itemView.findViewById(R.id.exchangeRateTextView)
         private val currenciesTextView: TextView = itemView.findViewById(R.id.currenciesTextView)
 
+        @SuppressLint("SetTextI18n")
         fun bind(offer: Offering) {
             descriptionTextView.text = offer.data.description
             exchangeRateTextView.text = "Exchange Rate: ${offer.data.payoutUnitsPerPayinUnit}"
-            currenciesTextView.text = "Payout: ${offer.data.payoutCurrency.currencyCode}, Payin: ${offer.data.payinCurrency.currencyCode}"
+            currenciesTextView.text = "Payout: ${offer.data.payout.currencyCode}, Payin: ${offer.data.payin.currencyCode}"
         }
     }
 }

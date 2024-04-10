@@ -5,15 +5,15 @@ import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import tbdex.sdk.protocol.serialization.Json
 import web5.sdk.crypto.AlgorithmId
+import web5.sdk.crypto.jwk.Jwk
 
 
 /**
@@ -85,9 +85,11 @@ class AndroidKeyManager : KeyManager {
      */
     override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
         val jwk = Crypto.generatePrivateKey(algorithmId, options)
-        saveSecret(context, jwk.keyID, jwk.toJSONString())
-        return jwk.keyID
+        val kid = jwk.kid ?: jwk.computeThumbprint()
+        saveSecret(context, kid, Json.stringify(jwk))
+        return kid
     }
+
 
     /**
      * Computes and returns a public key corresponding to the private key identified by the provided keyAlias.
@@ -96,7 +98,7 @@ class AndroidKeyManager : KeyManager {
      * @return The computed public key as a JWK object.
      * @throws Exception if a key with the provided alias is not found in the keyStore.
      */
-    override fun getPublicKey(keyAlias: String): JWK {
+    override fun getPublicKey(keyAlias: String): Jwk {
         val privateKey = getPrivateKey(keyAlias)
         return Crypto.computePublicKey(privateKey)
     }
@@ -122,8 +124,8 @@ class AndroidKeyManager : KeyManager {
      * @return The alias belonging to [publicKey]
      * @throws IllegalArgumentException if the key is not known to the [KeyManager]
      */
-    override fun getDeterministicAlias(publicKey: JWK): String {
-        val kid = publicKey.keyID
+    override fun getDeterministicAlias(publicKey: Jwk): String {
+        val kid = publicKey.kid ?: publicKey.computeThumbprint()
         val encryptedSharedPreferences = getEncryptedSharedPreferences(context)
         require(encryptedSharedPreferences.contains(kid)) {
             "key with alias $kid not found"
@@ -131,8 +133,11 @@ class AndroidKeyManager : KeyManager {
         return kid
     }
 
-    private fun getPrivateKey(keyAlias: String) =
-        JWK.parse(getSecret(context, keyAlias))
+    private fun getPrivateKey(keyAlias: String): Jwk {
+        val maybeJwkString = getSecret(context, keyAlias)
+        val jwk = Json.jsonMapper.readValue(maybeJwkString, Jwk::class.java)
+        return jwk
+    }
 
 
 
