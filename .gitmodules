@@ -1,0 +1,3 @@
+[submodule "tbdex-pfi-exemplar"]
+	path = tbdex-pfi-exemplar
+	url = https://github.com/TBD54566975/tbdex-pfi-exemplar
